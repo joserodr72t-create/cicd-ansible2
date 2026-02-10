@@ -69,3 +69,18 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ secrets.PROJECT_ID }}/${{ env.REPO }}/agent-frontend:${{ github.sha }}
           docker push ${{ env.REGISTRY }}/${{ secrets.PROJECT_ID }}/${{ env.REPO }}/agent-frontend:latest
 
+      # ─────────────────────────────────
+      # Deploy vía SSH al Control Node
+      # ─────────────────────────────────
+      - name: Deploy via Control Node
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.CONTROL_HOST }}
+          username: ${{ secrets.CONTROL_HOST_USER }}
+          key: ${{ secrets.CONTROL_HOST_SSH_KEY }}
+          port: ${{ secrets.CONTROL_HOST_PORT }}
+          script: |
+            cd ~/ansible-gcp
+            ansible-playbook -i inventory/gcp.yml \
+              playbooks/deploy-bot.yml \
+              --extra-vars "image_tag=${{ github.sha }}"
