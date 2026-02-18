@@ -9,6 +9,12 @@ env:
   REGISTRY: us-central1-docker.pkg.dev
   REPO: agent-repo
   CLUSTER_NAME: test-cluster-a
+# ─────────────────────────────────────
+# Permiso OIDC para Workload Identity Federation
+# ─────────────────────────────────────
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -29,12 +35,15 @@ jobs:
           echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" > backend/.env
 
       # ─────────────────────────────────────
-      # Autenticación en GCP
+      # Autenticación en GCP via Workload Identity Federation
+      # (Sin clave JSON — usa OIDC token efímero)
       # ─────────────────────────────────────
-      - name: Authenticate to GCP
+      
+      - name: Authenticate to GCP via WIF
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up Cloud SDK with kubectl
         uses: google-github-actions/setup-gcloud@v2
